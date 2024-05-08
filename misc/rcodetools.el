@@ -79,24 +79,27 @@ See also `rct-interactive'. "
    (lambda ()
      (rct-shell-command (funcall xmpfilter-command-function option)))))
 
+(require 'cl-lib)
+
 (defun xmpfilter-command (&optional option)
   "The xmpfilter command line, DWIM."
   (setq option (or option ""))
-  (flet ((in-block (beg-re)
-                   (save-excursion
-                     (goto-char (point-min))
-                     (when (re-search-forward beg-re nil t)
-                       (let ((s (point)) e)
-                         (when (re-search-forward "^end\n" nil t)
-                           (setq e (point))
-                           (goto-char s)
-                           (re-search-forward "# => *$" e t)))))))
+  (cl-labels ((in-block (beg-re)
+                        (save-excursion
+                          (goto-char (point-min))
+                          (when (re-search-forward beg-re nil t)
+                            (let ((s (point)) e)
+                              (when (re-search-forward "^end\n" nil t)
+                                (setq e (point))
+                                (goto-char s)
+                                (re-search-forward "# => *$" e t)))))))
     (cond ((in-block "^class.+< Test::Unit::TestCase$")
            (format "%s --unittest %s" xmpfilter-command-name option))
           ((in-block "^\\(describe\\|context\\).+do$")
            (format "%s --spec %s" xmpfilter-command-name option))
           (t
            (format "%s %s" xmpfilter-command-name option)))))
+
 
 ;;;; Completion
 (defvar rct-method-completion-table nil) ;internal
